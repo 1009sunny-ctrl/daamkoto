@@ -212,7 +212,7 @@ export function Navigation() {
   className="flex items-center justify-center"
 >
   <Image
-    src="/images/logo1.jpeg"
+    src="/images/Logo1.jpg"
     alt="Koto Nilo"
     width={150}
     height={45}

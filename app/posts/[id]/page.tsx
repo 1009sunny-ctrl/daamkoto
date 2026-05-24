@@ -10,9 +10,9 @@ export const revalidate = 0
 export default async function PostDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const { id } = params
+  const { id } = await params
   const supabase = await createClient()
 
   const { data: cow } = await supabase

@@ -65,7 +65,7 @@ export default async function HomePage() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-extrabold text-emerald-950 mb-4 leading-tight">
-            কত <span className="text-orange-950 font-semibold">নিলো?</span>
+            কত <span className="text-orange-500 font-semibold">নিলো?</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             আপনার কোরবানির পশুর দাম শেয়ার করুন, অন্যদের দাম দেখুন এবং 

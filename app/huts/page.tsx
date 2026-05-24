@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navigation, OrganicBlobs } from '@/components/navigation'
 import Link from 'next/link'
-import { DISTRICTS } from '@/lib/types'
+import { DIVISIONS } from '@/lib/types'
 
 export const revalidate = 0
 
@@ -35,7 +35,7 @@ export default async function HutsPage() {
 
           {/* District Cards */}
           <div className="space-y-8">
-            {DISTRICTS.map((district) => {
+            {DIVISIONS.map((district) => {
               const districtHuts = hutsByDistrict?.[district.value] || []
               
               return (

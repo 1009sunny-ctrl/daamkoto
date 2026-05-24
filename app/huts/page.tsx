@@ -78,12 +78,32 @@ export default async function HutsPage() {
 
           {/* District Cards - fetched from database */}
           <div className="space-y-8">
-            {(districts || []).map((district) => {
+            {(districts || [])
+  .map((district) => {
+    const districtHuts = hutsByDistrictId[String(district.id)] || []
+    const districtPostCount = districtHuts.reduce(
+      (sum, hut) => sum + Number(hut.calculated_uploads ?? hut.total_uploads ?? 0),
+      0
+    )
+
+    return { ...district, districtPostCount }
+  })
+  .sort((a, b) => b.districtPostCount - a.districtPostCount)
+  .map((district) => {
               // Get huts for this district by district_id
               const districtHuts = hutsByDistrictId[String(district.id)] || []
               
               // Sort by calculated uploads (most active first)
-              const sortedHuts = [...districtHuts].sort((a, b) => b.calculated_uploads - a.calculated_uploads)
+              const sortedHuts = [...districtHuts].sort((a, b) => {
+  const aCount = Number(a.calculated_uploads ?? a.total_uploads ?? 0)
+  const bCount = Number(b.calculated_uploads ?? b.total_uploads ?? 0)
+
+  if (bCount !== aCount) {
+    return bCount - aCount
+  }
+
+  return (a.name_bn || a.name || '').localeCompare(b.name_bn || b.name || '', 'bn')
+})
               
               return (
                 <div key={district.id} className="premium-card p-6">

@@ -8,21 +8,47 @@ export const revalidate = 0
 export default async function HomePage() {
   const supabase = await createClient()
   
-  const { data: cows } = await supabase
+  const { data: cows, error: cowsError } = await supabase
     .from('cows')
     .select('*')
     .eq('status', 'approved')
     .order('created_at', { ascending: false })
     .limit(12)
 
-  const { data: stats } = await supabase
+  if (cowsError) {
+    console.error('[v0] Failed to fetch cows:', cowsError)
+  }
+
+  const { data: stats, error: statsError } = await supabase
     .from('cows')
     .select('price')
     .eq('status', 'approved')
 
-  const totalPosts = stats?.length || 0
+  if (statsError) {
+    console.error('[v0] Failed to fetch stats:', statsError)
+  }
+
+  // Fetch total votes count
+  const { count: totalVotes, error: votesError } = await supabase
+    .from('votes')
+    .select('*', { count: 'exact', head: true })
+
+  if (votesError) {
+    console.error('[v0] Failed to fetch votes count:', votesError)
+  }
+
+  // Fetch huts count
+  const { count: hutsCount, error: hutsError } = await supabase
+    .from('huts')
+    .select('*', { count: 'exact', head: true })
+
+  if (hutsError) {
+    console.error('[v0] Failed to fetch huts count:', hutsError)
+  }
+
+  const totalPosts = stats?.length ?? 0
   const avgPrice = stats?.length 
-    ? Math.round(stats.reduce((acc, c) => acc + c.price, 0) / stats.length) 
+    ? Math.round(stats.reduce((acc, c) => acc + (c.price ?? 0), 0) / stats.length) 
     : 0
 
   return (
@@ -86,17 +112,17 @@ export default async function HomePage() {
             </div>
             <div className="premium-card p-4 text-center">
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600 text-2xl">storefront</span>
+                <span className="material-symbols-outlined text-blue-600 text-2xl">how_to_vote</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-900">১০+</div>
-              <div className="text-sm text-gray-500">হাট</div>
+              <div className="text-2xl font-bold text-emerald-900">{totalVotes ?? 0}</div>
+              <div className="text-sm text-gray-500">মোট ভোট</div>
             </div>
             <div className="premium-card p-4 text-center">
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-purple-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-purple-600 text-2xl">location_on</span>
+                <span className="material-symbols-outlined text-purple-600 text-2xl">storefront</span>
               </div>
-              <div className="text-2xl font-bold text-emerald-900">১২+</div>
-              <div className="text-sm text-gray-500">জেলা</div>
+              <div className="text-2xl font-bold text-emerald-900">{hutsCount ?? 0}</div>
+              <div className="text-sm text-gray-500">হাট</div>
             </div>
           </div>
         </div>

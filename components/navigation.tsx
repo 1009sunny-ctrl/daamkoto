@@ -1,8 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 const navItems = [
   { href: '/', icon: 'home', label: 'হোম', labelEn: 'Home' },
@@ -13,6 +17,75 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+
+  useEffect(() => {
+    const supabase = createClient()
+    
+    // Get initial session
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          // Fetch user role from profiles
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, display_name')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (profile) {
+            setUserRole(profile.role)
+          }
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching session:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    getSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role, display_name')
+          .eq('id', session.user.id)
+          .single()
+        
+        if (profile) {
+          setUserRole(profile.role)
+        }
+      } else {
+        setUserRole(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUser(null)
+    setUserRole(null)
+    setShowUserMenu(false)
+    router.push('/')
+    router.refresh()
+  }
+
+  const isAdmin = userRole && ['admin', 'super_admin', 'moderator', 'content_manager'].includes(userRole)
 
   return (
     <>
@@ -20,11 +93,15 @@ export function Navigation() {
       <nav className="hidden md:block fixed top-4 left-1/2 -translate-x-1/2 z-50">
         <div className="glass rounded-full px-2 py-2 shadow-lg">
           <div className="flex items-center gap-1">
-            <Link href="/" className="flex items-center gap-2 px-4 py-2 mr-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-                <span className="material-symbols-outlined text-white text-lg">pets</span>
-              </div>
-              <span className="font-bold text-emerald-900 text-lg">Koto Nilo</span>
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 px-3 py-1 mr-2">
+              <Image
+                src="/images/logo.jpeg"
+                alt="Koto Nilo"
+                width={40}
+                height={40}
+                className="rounded-lg"
+              />
             </Link>
             
             {navItems.map((item) => {
@@ -45,6 +122,63 @@ export function Navigation() {
                 </Link>
               )
             })}
+
+            {/* User Section */}
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="relative ml-2">
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-full bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {user.email?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="material-symbols-outlined text-lg">expand_more</span>
+                    </button>
+
+                    {showUserMenu && (
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                        <div className="px-4 py-2 border-b border-gray-100">
+                          <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                          {userRole && (
+                            <p className="text-xs text-emerald-600 capitalize">{userRole}</p>
+                          )}
+                        </div>
+                        {isAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setShowUserMenu(false)}
+                            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                          >
+                            <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                            অ্যাডমিন প্যানেল
+                          </Link>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          <span className="material-symbols-outlined text-lg">logout</span>
+                          লগআউট
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    href="/auth/login"
+                    className="flex items-center gap-2 ml-2 px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">login</span>
+                    <span className="font-medium">লগইন</span>
+                  </Link>
+                )}
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -79,20 +213,80 @@ export function Navigation() {
       <header className="md:hidden fixed top-0 left-0 right-0 z-40">
         <div className="glass px-4 py-3 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
-              <span className="material-symbols-outlined text-white text-lg">pets</span>
-            </div>
-            <span className="font-bold text-emerald-900 text-lg">Koto Nilo</span>
+            <Image
+              src="/images/logo.jpeg"
+              alt="Koto Nilo"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
           </Link>
-          <Link 
-            href="/auth/login"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium"
-          >
-            <span className="material-symbols-outlined text-lg">person</span>
-            <span>লগইন</span>
-          </Link>
+          
+          {!loading && (
+            <>
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">
+                        {user.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="material-symbols-outlined text-lg">expand_more</span>
+                  </button>
+
+                  {showUserMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                      <div className="px-4 py-2 border-b border-gray-100">
+                        <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                        {userRole && (
+                          <p className="text-xs text-emerald-600 capitalize">{userRole}</p>
+                        )}
+                      </div>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          onClick={() => setShowUserMenu(false)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
+                          অ্যাডমিন প্যানেল
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        <span className="material-symbols-outlined text-lg">logout</span>
+                        লগআউট
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  href="/auth/login"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-sm font-medium"
+                >
+                  <span className="material-symbols-outlined text-lg">login</span>
+                  <span>লগইন</span>
+                </Link>
+              )}
+            </>
+          )}
         </div>
       </header>
+
+      {/* Click outside to close menu */}
+      {showUserMenu && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowUserMenu(false)}
+        />
+      )}
     </>
   )
 }

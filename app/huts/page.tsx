@@ -1,24 +1,62 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navigation, OrganicBlobs } from '@/components/navigation'
 import Link from 'next/link'
-import { DIVISIONS } from '@/lib/types'
 
 export const revalidate = 0
 
 export default async function HutsPage() {
   const supabase = await createClient()
   
+  // Fetch real districts from database instead of hardcoded DIVISIONS
+  const { data: districts } = await supabase
+    .from('districts')
+    .select('*')
+    .eq('is_active', true)
+    .order('name_bn')
+
+  // Fetch all active haats
   const { data: huts } = await supabase
     .from('huts')
     .select('*')
-    .order('total_uploads', { ascending: false })
+    .eq('is_active', true)
+    .order('name_bn')
 
-  // Group huts by district
-  const hutsByDistrict = huts?.reduce((acc, hut) => {
-    if (!acc[hut.district]) acc[hut.district] = []
-    acc[hut.district].push(hut)
+  // Fetch approved cows to calculate real post counts and avg prices per haat
+  const { data: approvedCows } = await supabase
+    .from('cows')
+    .select('hut_id, price')
+    .eq('status', 'approved')
+    .not('hut_id', 'is', null)
+
+  // Calculate stats per haat from approved cows
+  const haatStats = (approvedCows || []).reduce((acc, cow) => {
+    if (cow.hut_id) {
+      if (!acc[cow.hut_id]) {
+        acc[cow.hut_id] = { count: 0, totalPrice: 0 }
+      }
+      acc[cow.hut_id].count++
+      acc[cow.hut_id].totalPrice += cow.price || 0
+    }
     return acc
-  }, {} as Record<string, typeof huts>)
+  }, {} as Record<string, { count: number; totalPrice: number }>)
+
+  // Enhance huts with calculated stats
+  const hutsWithStats = (huts || []).map(hut => {
+    const stats = haatStats[hut.id] || { count: 0, totalPrice: 0 }
+    return {
+      ...hut,
+      calculated_uploads: stats.count,
+      calculated_avg_price: stats.count > 0 ? Math.round(stats.totalPrice / stats.count) : 0,
+    }
+  })
+
+  // Group huts by district_id for proper linking
+  const hutsByDistrictId = hutsWithStats.reduce((acc, hut) => {
+    const key = hut.district_id || hut.district || 'unknown'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(hut)
+    return acc
+  }, {} as Record<string, typeof hutsWithStats>)
 
   return (
     <main className="min-h-screen relative">
@@ -33,26 +71,30 @@ export default async function HutsPage() {
             <p className="text-gray-600">বাংলাদেশের বিভিন্ন পশুর হাট থেকে দাম দেখুন</p>
           </div>
 
-          {/* District Cards */}
+          {/* District Cards - fetched from database */}
           <div className="space-y-8">
-            {DIVISIONS.map((district) => {
-              const districtHuts = hutsByDistrict?.[district.value] || []
+            {(districts || []).map((district) => {
+              // Get huts for this district by district_id
+              const districtHuts = hutsByDistrictId[district.id] || []
+              
+              // Sort by calculated uploads (most active first)
+              const sortedHuts = [...districtHuts].sort((a, b) => b.calculated_uploads - a.calculated_uploads)
               
               return (
-                <div key={district.value} className="premium-card p-6">
+                <div key={district.id} className="premium-card p-6">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
                       <span className="material-symbols-outlined text-emerald-600">location_city</span>
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-emerald-900">{district.label}</h2>
-                      <p className="text-sm text-gray-500">{districtHuts.length} টি হাট</p>
+                      <h2 className="text-xl font-bold text-emerald-900">{district.name_bn}</h2>
+                      <p className="text-sm text-gray-500">{sortedHuts.length} টি হাট</p>
                     </div>
                   </div>
 
-                  {districtHuts.length > 0 ? (
+                  {sortedHuts.length > 0 ? (
                     <div className="grid gap-3 sm:grid-cols-2">
-                      {districtHuts.map((hut) => (
+                      {sortedHuts.map((hut) => (
                         <Link
                           key={hut.id}
                           href={`/huts/${hut.id}`}
@@ -64,9 +106,9 @@ export default async function HutsPage() {
                           <div className="flex-1 min-w-0">
                             <h3 className="font-medium text-gray-900 truncate">{hut.name_bn || hut.name}</h3>
                             <div className="flex items-center gap-3 text-sm text-gray-500">
-                              <span>{hut.total_uploads} পোস্ট</span>
-                              {hut.avg_price > 0 && (
-                                <span>গড় ৳{hut.avg_price.toLocaleString('bn-BD')}</span>
+                              <span>{hut.calculated_uploads} পোস্ট</span>
+                              {hut.calculated_avg_price > 0 && (
+                                <span>গড় ৳{hut.calculated_avg_price.toLocaleString('bn-BD')}</span>
                               )}
                             </div>
                           </div>
@@ -80,6 +122,17 @@ export default async function HutsPage() {
                 </div>
               )
             })}
+
+            {/* Fallback if no districts found */}
+            {(!districts || districts.length === 0) && (
+              <div className="premium-card p-12 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-gray-400 text-3xl">location_off</span>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-700 mb-2">কোনো জেলা পাওয়া যায়নি</h3>
+                <p className="text-gray-500">অ্যাডমিন প্যানেল থেকে জেলা যোগ করুন।</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

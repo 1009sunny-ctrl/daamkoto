@@ -26,14 +26,16 @@ export interface Cow {
   id: string
   image_url: string
   price: number
-  district: string
+  district: string // Display text fallback
+  district_id: string | null // Proper relationship to districts table
   description: string | null
   estimated_weight: number | null
   good_deal_count: number
   overpriced_count: number
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
-  hut: string | null
+  hut: string | null // Display text fallback
+  hut_id: string | null // Proper relationship to huts table
   breed: string | null
   title: string | null
   reported_count: number

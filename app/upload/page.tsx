@@ -67,16 +67,23 @@ export default function UploadPage() {
     fetchData()
   }, [])
 
-  // Filter haats when district changes
+  // Filter haats when district changes (use district_id for proper linking)
   useEffect(() => {
     if (district) {
-      const filtered = haats.filter(h => h.district === district)
-      setFilteredHaats(filtered)
+      // Find the selected district to get its ID
+      const selectedDistrict = districts.find(d => d.id === district)
+      if (selectedDistrict) {
+        // Filter haats by district_id for accurate linking
+        const filtered = haats.filter(h => h.district_id === selectedDistrict.id || h.district === selectedDistrict.name)
+        setFilteredHaats(filtered)
+      } else {
+        setFilteredHaats([])
+      }
       setHut('') // Reset hut selection
     } else {
       setFilteredHaats([])
     }
-  }, [district, haats])
+  }, [district, haats, districts])
 
   const compressImage = useCallback(async (file: File): Promise<File> => {
     setIsCompressing(true)
@@ -164,8 +171,15 @@ export default function UploadPage() {
         .from('cow-images')
         .getPublicUrl(fileName)
 
-      // Determine final hut name
-      const finalHut = hut === 'other' ? customHut : (hut || null)
+      // Get district info for proper linking
+      const selectedDistrict = districts.find(d => d.id === district)
+      const districtId = selectedDistrict?.id || null
+      const districtName = selectedDistrict?.name || ''
+
+      // Determine final hut info - use ID for linking, name for display
+      const selectedHaat = hut && hut !== 'other' ? filteredHaats.find(h => h.id === hut) : null
+      const hutId = selectedHaat?.id || null
+      const finalHutName = hut === 'other' ? customHut : (selectedHaat?.name_bn || selectedHaat?.name || null)
 
       // Get anonymous user ID
       let anonymousUserId = localStorage.getItem('anonymous_user_id')
@@ -174,12 +188,14 @@ export default function UploadPage() {
         localStorage.setItem('anonymous_user_id', anonymousUserId)
       }
 
-      // Insert cow record
+      // Insert cow record with proper ID linking
       const { error: insertError } = await supabase.from('cows').insert({
         image_url: publicUrl,
         price: parseInt(price),
-        district,
-        hut: finalHut,
+        district: districtName, // Display text fallback
+        district_id: districtId, // Proper relationship
+        hut: finalHutName, // Display text fallback
+        hut_id: hutId, // Proper relationship (null for custom/other)
         breed: breed || null,
         estimated_weight: weight ? parseInt(weight) : null,
         status: 'pending',
@@ -188,14 +204,11 @@ export default function UploadPage() {
       if (insertError) throw insertError
 
       // Update hut upload count if a predefined hut was selected
-      if (hut && hut !== 'other') {
-        const selectedHaat = filteredHaats.find(h => h.name === hut)
-        if (selectedHaat) {
-          await supabase
-            .from('huts')
-            .update({ total_uploads: (selectedHaat.total_uploads || 0) + 1 })
-            .eq('id', selectedHaat.id)
-        }
+      if (selectedHaat) {
+        await supabase
+          .from('huts')
+          .update({ total_uploads: (selectedHaat.total_uploads || 0) + 1 })
+          .eq('id', selectedHaat.id)
       }
 
       setSuccess(true)
@@ -221,7 +234,7 @@ export default function UploadPage() {
               </div>
               <h1 className="text-2xl font-bold text-emerald-900 mb-2">পোস্ট সফল হয়েছে!</h1>
               <p className="text-gray-600 mb-6">
-                আপনার পোস্টটি পর্যালোচনার জন্য জমা দেওয়া হয়েছে। অনুমোদনের পর এটি প্রকাশিত হবে।
+                আপনার পোস্টটি পর্যালোচনার জন্য জমা দেও���়া হয়েছে। অনুমোদনের পর এটি প্রকাশিত হবে।
               </p>
               <div className="flex gap-3">
                 <button
@@ -342,7 +355,7 @@ export default function UploadPage() {
               </div>
             </div>
 
-            {/* District - Dynamic from Database */}
+            {/* District - Dynamic from Database (value is district.id) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 জেলা <span className="text-red-500">*</span>
@@ -358,12 +371,12 @@ export default function UploadPage() {
                   {loadingData ? 'লোড হচ্ছে...' : 'জেলা নির্বাচন করুন'}
                 </option>
                 {districts.map((d) => (
-                  <option key={d.id} value={d.name}>{d.name_bn}</option>
+                  <option key={d.id} value={d.id}>{d.name_bn}</option>
                 ))}
               </select>
             </div>
 
-            {/* Hut - Dynamic based on District */}
+            {/* Hut - Dynamic based on District (value is haat.id) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 হাট/বাজার (ঐচ্ছিক)
@@ -377,7 +390,7 @@ export default function UploadPage() {
                   >
                     <option value="">হাট নির্বাচন করুন</option>
                     {filteredHaats.map((h) => (
-                      <option key={h.id} value={h.name}>
+                      <option key={h.id} value={h.id}>
                         {h.name_bn || h.name}
                         {h.is_trending && ' 🔥'}
                       </option>

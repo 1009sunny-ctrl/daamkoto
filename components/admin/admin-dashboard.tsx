@@ -78,7 +78,10 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
           const { data } = await supabase.from('districts').select('*').order('division, name')
           setDistricts(data || [])
         } else if (mainTab === 'users' && hasPermission(userRole, 'users:view')) {
-          const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+          const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+          if (error) {
+            console.error('[v0] Users fetch error:', error)
+          }
           setUsers(data || [])
         } else if (mainTab === 'reports') {
           const { data } = await supabase.from('reports').select('*, cow:cows(*)').order('created_at', { ascending: false })

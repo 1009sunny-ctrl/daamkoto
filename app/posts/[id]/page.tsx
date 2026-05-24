@@ -127,12 +127,89 @@ export default async function PostDetailPage({
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="w-full py-3 rounded-xl bg-emerald-900 text-white font-semibold"
-              >
-                শেয়ার করুন
-              </button>
+<div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
+  {/* Native Share */}
+  <button
+    onClick={() => {
+      if (navigator.share) {
+        navigator.share({
+          title: 'কত নিলো?',
+          text: `এই গরুর দাম দেখুন — ৳${cow.price}`,
+          url: `${window.location.origin}/posts/${cow.id}`,
+        })
+      }
+    }}
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-900 text-white font-semibold"
+  >
+    <span className="material-symbols-outlined">share</span>
+    শেয়ার
+  </button>
+
+  {/* WhatsApp */}
+  <a
+    href={`https://wa.me/?text=${encodeURIComponent(
+      `এই গরুর দাম দেখুন: ৳${cow.price}\n${window.location.origin}/posts/${cow.id}`
+    )}`}
+    target="_blank"
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white font-semibold"
+  >
+    WhatsApp
+  </a>
+
+  {/* Facebook */}
+  <a
+    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+      `${window.location.origin}/posts/${cow.id}`
+    )}`}
+    target="_blank"
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 text-white font-semibold"
+  >
+    Facebook
+  </a>
+
+  {/* X / Twitter */}
+  <a
+    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+      `এই গরুর দাম দেখুন ৳${cow.price}`
+    )}&url=${encodeURIComponent(
+      `${window.location.origin}/posts/${cow.id}`
+    )}`}
+    target="_blank"
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-black text-white font-semibold"
+  >
+    X
+  </a>
+
+  {/* Telegram */}
+  <a
+    href={`https://t.me/share/url?url=${encodeURIComponent(
+      `${window.location.origin}/posts/${cow.id}`
+    )}&text=${encodeURIComponent(
+      `এই গরুর দাম দেখুন ৳${cow.price}`
+    )}`}
+    target="_blank"
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-500 text-white font-semibold"
+  >
+    Telegram
+  </a>
+
+  {/* Copy Link */}
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(
+        `${window.location.origin}/posts/${cow.id}`
+      )
+
+      alert('লিংক কপি হয়েছে')
+    }}
+    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-200 text-gray-800 font-semibold"
+  >
+    <span className="material-symbols-outlined">content_copy</span>
+    কপি
+  </button>
+
+</div>
             </div>
           </div>
         </div>

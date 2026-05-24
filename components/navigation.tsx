@@ -168,15 +168,7 @@ export function Navigation() {
                       </div>
                     )}
                   </div>
-                ) : (
-                  <Link
-                    href="/auth/login"
-                    className="flex items-center gap-2 ml-2 px-4 py-2 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-lg">login</span>
-                    <span className="font-medium">লগইন</span>
-                  </Link>
-                )}
+                ) : null}
               </>
             )}
           </div>
@@ -266,15 +258,7 @@ export function Navigation() {
                     </div>
                   )}
                 </div>
-              ) : (
-                <Link 
-                  href="/auth/login"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-600 text-white text-sm font-medium"
-                >
-                  <span className="material-symbols-outlined text-lg">login</span>
-                  <span>লগইন</span>
-                </Link>
-              )}
+              ) : null}
             </>
           )}
         </div>

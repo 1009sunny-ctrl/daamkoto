@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
 import { createClient } from '@/lib/supabase/client'
 import { Navigation, OrganicBlobs } from '@/components/navigation'
-import { DISTRICTS, BREEDS } from '@/lib/types'
+import { BREEDS, type District, type Hut } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const MAX_FILE_SIZE = 350 * 1024 // 350KB
@@ -24,6 +24,7 @@ export default function UploadPage() {
   const [price, setPrice] = useState('')
   const [district, setDistrict] = useState('')
   const [hut, setHut] = useState('')
+  const [customHut, setCustomHut] = useState('')
   const [breed, setBreed] = useState('')
   const [weight, setWeight] = useState('')
   const [description, setDescription] = useState('')
@@ -31,6 +32,41 @@ export default function UploadPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+
+  // Dynamic data from database
+  const [districts, setDistricts] = useState<District[]>([])
+  const [haats, setHaats] = useState<Hut[]>([])
+  const [filteredHaats, setFilteredHaats] = useState<Hut[]>([])
+  const [loadingData, setLoadingData] = useState(true)
+
+  // Fetch districts and haats on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const supabase = createClient()
+      
+      const [districtsRes, haatsRes] = await Promise.all([
+        supabase.from('districts').select('*').eq('is_active', true).order('name_bn'),
+        supabase.from('huts').select('*').eq('is_active', true).order('name_bn'),
+      ])
+
+      if (districtsRes.data) setDistricts(districtsRes.data)
+      if (haatsRes.data) setHaats(haatsRes.data)
+      setLoadingData(false)
+    }
+
+    fetchData()
+  }, [])
+
+  // Filter haats when district changes
+  useEffect(() => {
+    if (district) {
+      const filtered = haats.filter(h => h.district === district)
+      setFilteredHaats(filtered)
+      setHut('') // Reset hut selection
+    } else {
+      setFilteredHaats([])
+    }
+  }, [district, haats])
 
   const compressImage = useCallback(async (file: File): Promise<File> => {
     setIsCompressing(true)
@@ -118,13 +154,23 @@ export default function UploadPage() {
         .from('cow-images')
         .getPublicUrl(fileName)
 
+      // Determine final hut name
+      const finalHut = hut === 'other' ? customHut : (hut || null)
+
+      // Get anonymous user ID
+      let anonymousUserId = localStorage.getItem('anonymous_user_id')
+      if (!anonymousUserId) {
+        anonymousUserId = crypto.randomUUID()
+        localStorage.setItem('anonymous_user_id', anonymousUserId)
+      }
+
       // Insert cow record
       const { error: insertError } = await supabase.from('cows').insert({
         image_url: publicUrl,
         title: title || null,
         price: parseInt(price),
         district,
-        hut: hut || null,
+        hut: finalHut,
         breed: breed || null,
         estimated_weight: weight ? parseInt(weight) : null,
         description: description || null,
@@ -132,6 +178,17 @@ export default function UploadPage() {
       })
 
       if (insertError) throw insertError
+
+      // Update hut upload count if a predefined hut was selected
+      if (hut && hut !== 'other') {
+        const selectedHaat = filteredHaats.find(h => h.name === hut)
+        if (selectedHaat) {
+          await supabase
+            .from('huts')
+            .update({ total_uploads: (selectedHaat.total_uploads || 0) + 1 })
+            .eq('id', selectedHaat.id)
+        }
+      }
 
       setSuccess(true)
     } catch (err) {
@@ -174,6 +231,7 @@ export default function UploadPage() {
                     setPrice('')
                     setDistrict('')
                     setHut('')
+                    setCustomHut('')
                     setBreed('')
                     setWeight('')
                     setDescription('')
@@ -292,7 +350,7 @@ export default function UploadPage() {
               </div>
             </div>
 
-            {/* District */}
+            {/* District - Dynamic from Database */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 জেলা <span className="text-red-500">*</span>
@@ -301,27 +359,62 @@ export default function UploadPage() {
                 value={district}
                 onChange={(e) => setDistrict(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all appearance-none bg-white"
+                disabled={loadingData}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all appearance-none bg-white disabled:bg-gray-50"
               >
-                <option value="">জেলা নির্বাচন করুন</option>
-                {DISTRICTS.map((d) => (
-                  <option key={d.value} value={d.value}>{d.label}</option>
+                <option value="">
+                  {loadingData ? 'লোড হচ্ছে...' : 'জেলা নির্বাচন করুন'}
+                </option>
+                {districts.map((d) => (
+                  <option key={d.id} value={d.name}>{d.name_bn}</option>
                 ))}
               </select>
             </div>
 
-            {/* Hut */}
+            {/* Hut - Dynamic based on District */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 হাট/বাজার (ঐচ্ছিক)
               </label>
-              <input
-                type="text"
-                value={hut}
-                onChange={(e) => setHut(e.target.value)}
-                placeholder="যেমন: গাবতলী হাট"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
-              />
+              {district ? (
+                <>
+                  <select
+                    value={hut}
+                    onChange={(e) => setHut(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all appearance-none bg-white"
+                  >
+                    <option value="">হাট নির্বাচন করুন</option>
+                    {filteredHaats.map((h) => (
+                      <option key={h.id} value={h.name}>
+                        {h.name_bn || h.name}
+                        {h.is_trending && ' 🔥'}
+                      </option>
+                    ))}
+                    <option value="other">অন্যান্য (নিজে লিখুন)</option>
+                  </select>
+                  
+                  {/* Custom hut input when "other" is selected */}
+                  {hut === 'other' && (
+                    <input
+                      type="text"
+                      value={customHut}
+                      onChange={(e) => setCustomHut(e.target.value)}
+                      placeholder="হাটের নাম লিখুন"
+                      className="w-full mt-3 px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+                    />
+                  )}
+                  
+                  {filteredHaats.length === 0 && (
+                    <p className="mt-2 text-sm text-gray-500">
+                      এই জেলায় কোনো হাট নেই। নিজে লিখতে &quot;অন্যান্য&quot; নির্বাচন করুন।
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-gray-500 py-3">
+                  প্রথমে জেলা নির্বাচন করুন
+                </p>
+              )}
             </div>
 
             {/* Breed */}

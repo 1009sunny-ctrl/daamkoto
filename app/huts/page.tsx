@@ -19,7 +19,7 @@ export default async function HutsPage() {
     .from('huts')
     .select('*')
     .eq('is_active', true)
-    .order('name_bn')
+    .order('total_uploads', { ascending: false })
 
   // Fetch approved cows to calculate real post counts and avg prices per haat
   const { data: approvedCows } = await supabase

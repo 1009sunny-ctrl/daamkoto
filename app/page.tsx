@@ -95,7 +95,7 @@ export default async function HomePage() {
       {/* Stats Section */}
       <section className="py-8 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
             <div className="premium-card p-4 text-center">
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-emerald-100 flex items-center justify-center">
                 <span className="material-symbols-outlined text-emerald-600 text-2xl">pets</span>

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Navigation, OrganicBlobs } from '@/components/navigation'
+import { SocialShare } from '@/components/social-share'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
@@ -9,9 +10,9 @@ export const revalidate = 0
 export default async function PostDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const { id } = await params
+  const { id } = params
   const supabase = await createClient()
 
   const { data: cow } = await supabase
@@ -38,6 +39,8 @@ export default async function PostDetailPage({
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('bn-BD').format(price)
   }
+
+  const postUrl = `https://www.pixork.com/posts/${cow.id}`
 
   return (
     <main className="min-h-screen relative">
@@ -127,89 +130,15 @@ export default async function PostDetailPage({
                 </div>
               </div>
 
-<div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-
-  {/* Native Share */}
-  <button
-    onClick={() => {
-      if (navigator.share) {
-        navigator.share({
-          title: 'কত নিলো?',
-          text: `এই গরুর দাম দেখুন — ৳${cow.price}`,
-          url: `${window.location.origin}/posts/${cow.id}`,
-        })
-      }
-    }}
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-900 text-white font-semibold"
-  >
-    <span className="material-symbols-outlined">share</span>
-    শেয়ার
-  </button>
-
-  {/* WhatsApp */}
-  <a
-    href={`https://wa.me/?text=${encodeURIComponent(
-      `এই গরুর দাম দেখুন: ৳${cow.price}\n${window.location.origin}/posts/${cow.id}`
-    )}`}
-    target="_blank"
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 text-white font-semibold"
-  >
-    WhatsApp
-  </a>
-
-  {/* Facebook */}
-  <a
-    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-      `${window.location.origin}/posts/${cow.id}`
-    )}`}
-    target="_blank"
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-600 text-white font-semibold"
-  >
-    Facebook
-  </a>
-
-  {/* X / Twitter */}
-  <a
-    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-      `এই গরুর দাম দেখুন ৳${cow.price}`
-    )}&url=${encodeURIComponent(
-      `${window.location.origin}/posts/${cow.id}`
-    )}`}
-    target="_blank"
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-black text-white font-semibold"
-  >
-    X
-  </a>
-
-  {/* Telegram */}
-  <a
-    href={`https://t.me/share/url?url=${encodeURIComponent(
-      `${window.location.origin}/posts/${cow.id}`
-    )}&text=${encodeURIComponent(
-      `এই গরুর দাম দেখুন ৳${cow.price}`
-    )}`}
-    target="_blank"
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-sky-500 text-white font-semibold"
-  >
-    Telegram
-  </a>
-
-  {/* Copy Link */}
-  <button
-    onClick={() => {
-      navigator.clipboard.writeText(
-        `${window.location.origin}/posts/${cow.id}`
-      )
-
-      alert('লিংক কপি হয়েছে')
-    }}
-    className="flex items-center justify-center gap-2 py-3 rounded-xl bg-gray-200 text-gray-800 font-semibold"
-  >
-    <span className="material-symbols-outlined">content_copy</span>
-    কপি
-  </button>
-
-</div>
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">শেয়ার করুন</h3>
+                <SocialShare
+                  url={postUrl}
+                  title={cow.title || 'কোরবানির গরু'}
+                  price={cow.price}
+                  imageUrl={cow.image_url}
+                />
+              </div>
             </div>
           </div>
         </div>

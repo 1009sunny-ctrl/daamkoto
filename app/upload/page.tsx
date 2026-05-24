@@ -209,10 +209,9 @@ if (selectedDistrict) {
 
       // Update hut upload count if a predefined hut was selected
       if (selectedHaat) {
-        await supabase
-          .from('huts')
-          .update({ total_uploads: (selectedHaat.total_uploads || 0) + 1 })
-          .eq('id', selectedHaat.id)
+        await supabase.rpc('increment_hut_uploads', {
+  hut_id_input: selectedHaat.id
+})
       }
 
       setSuccess(true)

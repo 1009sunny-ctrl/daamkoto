@@ -64,14 +64,15 @@ export function HaatManagement({ initialHaats, districts, onUpdate }: HaatManage
     setShowForm(true)
   }
 
-  const handleDistrictChange = (districtName: string) => {
-    const district = districts.find(d => d.name === districtName)
-    setFormData(prev => ({
-      ...prev,
-      district: districtName,
-      district_id: district?.id || '',
-    }))
-  }
+  const handleDistrictChange = (districtId: string) => {
+  const selectedDistrict = districts.find(d => String(d.id) === String(districtId))
+
+  setFormData(prev => ({
+    ...prev,
+    district_id: districtId,
+    district: selectedDistrict?.name_bn || selectedDistrict?.name || '',
+  }))
+}
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -377,15 +378,16 @@ export function HaatManagement({ initialHaats, districts, onUpdate }: HaatManage
                   জেলা
                 </label>
                 <select
-                  value={formData.district}
+                  value={formData.district_id}
                   onChange={(e) => handleDistrictChange(e.target.value)}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                   required
                 >
                   <option value="">জেলা নির্বাচন করুন</option>
                   {districts.map(d => (
-                    <option key={d.id} value={d.name}>{d.name_bn} ({d.name})</option>
-                  ))}
+<option key={d.id} value={d.id}>
+  {d.name_bn || d.name}
+</option>                  ))}
                 </select>
               </div>
               <div className="flex items-center gap-4">

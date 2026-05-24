@@ -202,67 +202,87 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-40">
-        <div className="glass px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/images/logo.jpeg"
-              alt="Koto Nilo"
-              width={36}
-              height={36}
-              className="rounded-lg"
-            />
-          </Link>
-          
-          {!loading && (
-            <>
-              {user ? (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-800"
-                  >
-                    <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center">
-                      <span className="text-white text-xs font-medium">
-                        {user.email?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <span className="material-symbols-outlined text-lg">expand_more</span>
-                  </button>
+      {/* Mobile Header */}
+<header className="md:hidden fixed top-0 left-0 right-0 z-40">
+  <div className="glass px-4 py-3 flex items-center justify-center relative h-16">
 
-                  {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
-                      <div className="px-4 py-2 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
-                        {userRole && (
-                          <p className="text-xs text-emerald-600 capitalize">{userRole}</p>
-                        )}
-                      </div>
-                      {isAdmin && (
-                        <Link
-                          href="/admin"
-                          onClick={() => setShowUserMenu(false)}
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        >
-                          <span className="material-symbols-outlined text-lg">admin_panel_settings</span>
-                          অ্যাডমিন প্যানেল
-                        </Link>
-                      )}
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        <span className="material-symbols-outlined text-lg">logout</span>
-                        লগআউট
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : null}
-            </>
+    {/* Center Logo + Name */}
+    <Link
+      href="/"
+      className="flex items-center gap-2"
+    >
+      <Image
+        src="/images/Logo1.jpg"
+        alt="Koto Nilo"
+        width={38}
+        height={38}
+        className="rounded-full object-contain"
+      />
+
+      <span className="text-xl font-extrabold tracking-tight leading-none">
+        <span className="text-emerald-950">Koto</span>
+        <span className="text-orange-500">Nilo</span>
+      </span>
+    </Link>
+
+    {/* User Menu */}
+    {!loading && user && (
+      <div className="absolute right-4">
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-100 text-emerald-800"
+          >
+            <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center">
+              <span className="text-white text-xs font-medium">
+                {user.email?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+              <div className="px-4 py-2 border-b border-gray-100">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {user.email}
+                </p>
+
+                {userRole && (
+                  <p className="text-xs text-emerald-600 capitalize">
+                    {userRole}
+                  </p>
+                )}
+              </div>
+
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={() => setShowUserMenu(false)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    admin_panel_settings
+                  </span>
+                  অ্যাডমিন প্যানেল
+                </Link>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  logout
+                </span>
+                লগআউট
+              </button>
+            </div>
           )}
         </div>
-      </header>
+      </div>
+    )}
+  </div>
+</header>
 
       {/* Click outside to close menu */}
       {showUserMenu && (

@@ -65,7 +65,7 @@ export default async function HomePage() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-extrabold text-emerald-950 mb-4 leading-tight">
-            কত নিলো?
+            কত <span className="text-orange-950 font-semibold">নিলো?</span>
           </h1>
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             আপনার কোরবানির পশুর দাম শেয়ার করুন, অন্যদের দাম দেখুন এবং 
@@ -79,7 +79,7 @@ export default async function HomePage() {
               className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-emerald-900 text-white font-semibold text-lg shadow-lg hover:bg-emerald-800 transition-all hover:scale-105"
             >
               <span className="material-symbols-outlined">add_photo_alternate</span>
-              <span>দাম শেয়ার করুন</span>
+              <span>আপলোড গরু</span>
             </Link>
             <Link
               href="/huts"

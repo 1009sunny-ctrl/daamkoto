@@ -20,14 +20,12 @@ export default function UploadPage() {
   const [compressedSize, setCompressedSize] = useState<number>(0)
   const [isCompressing, setIsCompressing] = useState(false)
   
-  const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
   const [district, setDistrict] = useState('')
   const [hut, setHut] = useState('')
   const [customHut, setCustomHut] = useState('')
   const [breed, setBreed] = useState('')
   const [weight, setWeight] = useState('')
-  const [description, setDescription] = useState('')
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -179,13 +177,11 @@ export default function UploadPage() {
       // Insert cow record
       const { error: insertError } = await supabase.from('cows').insert({
         image_url: publicUrl,
-        title: title || null,
         price: parseInt(price),
         district,
         hut: finalHut,
         breed: breed || null,
         estimated_weight: weight ? parseInt(weight) : null,
-        description: description || null,
         status: 'pending',
       })
 
@@ -239,14 +235,12 @@ export default function UploadPage() {
                     setSuccess(false)
                     setImage(null)
                     setImagePreview(null)
-                    setTitle('')
                     setPrice('')
                     setDistrict('')
                     setHut('')
                     setCustomHut('')
                     setBreed('')
                     setWeight('')
-                    setDescription('')
                   }}
                   className="flex-1 py-3 rounded-xl font-medium bg-emerald-900 text-white hover:bg-emerald-800 transition-colors"
                 >
@@ -328,20 +322,6 @@ export default function UploadPage() {
                   )}
                 </button>
               )}
-            </div>
-
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                শিরোনাম (ঐচ্ছিক)
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="যেমন: সুন্দর ব্রাহমা গরু"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
-              />
             </div>
 
             {/* Price */}
@@ -457,20 +437,6 @@ export default function UploadPage() {
                 onChange={(e) => setWeight(e.target.value)}
                 placeholder="300"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
-              />
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                বিবরণ (ঐচ্ছিক)
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="গরু সম্পর্কে কিছু লিখুন..."
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-none"
               />
             </div>
 

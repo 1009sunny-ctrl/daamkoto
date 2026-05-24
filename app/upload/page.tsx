@@ -44,14 +44,26 @@ export default function UploadPage() {
     const fetchData = async () => {
       const supabase = createClient()
       
-      const [districtsRes, haatsRes] = await Promise.all([
-        supabase.from('districts').select('*').eq('is_active', true).order('name_bn'),
-        supabase.from('huts').select('*').eq('is_active', true).order('name_bn'),
-      ])
+      try {
+        const [districtsRes, haatsRes] = await Promise.all([
+          supabase.from('districts').select('*').order('name_bn'),
+          supabase.from('huts').select('*').order('name_bn'),
+        ])
 
-      if (districtsRes.data) setDistricts(districtsRes.data)
-      if (haatsRes.data) setHaats(haatsRes.data)
-      setLoadingData(false)
+        if (districtsRes.error) {
+          console.error('[v0] Districts fetch error:', districtsRes.error)
+        }
+        if (haatsRes.error) {
+          console.error('[v0] Haats fetch error:', haatsRes.error)
+        }
+
+        setDistricts(districtsRes.data || [])
+        setHaats(haatsRes.data || [])
+      } catch (err) {
+        console.error('[v0] Data fetch error:', err)
+      } finally {
+        setLoadingData(false)
+      }
     }
 
     fetchData()

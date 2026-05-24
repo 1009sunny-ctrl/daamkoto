@@ -37,6 +37,9 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
   const [stats, setStats] = useState<AnalyticsStats | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const [roleUpdateError, setRoleUpdateError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+
   // Fetch data based on active tab
   useEffect(() => {
     const fetchData = async () => {
@@ -75,7 +78,10 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
           const { data } = await supabase.from('districts').select('*').order('division, name')
           setDistricts(data || [])
         } else if (mainTab === 'users' && hasPermission(userRole, 'users:view')) {
-          const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+          const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false })
+          if (error) {
+            console.error('[v0] Users fetch error:', error)
+          }
           setUsers(data || [])
         } else if (mainTab === 'reports') {
           const { data } = await supabase.from('reports').select('*, cow:cows(*)').order('created_at', { ascending: false })
@@ -101,6 +107,7 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
 
   const handleAction = async (cowId: string, action: 'approve' | 'reject' | 'delete' | 'feature' | 'unfeature' | 'hide' | 'unhide') => {
     setActionLoading(cowId)
+    setActionError(null)
     const supabase = createClient()
 
     try {
@@ -111,26 +118,47 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
           const fileName = urlParts[urlParts.length - 1]
           await supabase.storage.from('cow-images').remove([fileName])
         }
-        await supabase.from('cows').delete().eq('id', cowId)
+        const { error } = await supabase.from('cows').delete().eq('id', cowId)
+        if (error) {
+          console.error('[v0] Delete error:', error)
+          setActionError(`মুছে ফেলতে ব্যর্থ: ${error.message}`)
+          return
+        }
         setCows(prev => prev.filter(c => c.id !== cowId))
       } else if (action === 'feature' || action === 'unfeature') {
         const isFeatured = action === 'feature'
-        await supabase.from('cows').update({ is_featured: isFeatured }).eq('id', cowId)
+        const { error } = await supabase.from('cows').update({ is_featured: isFeatured }).eq('id', cowId)
+        if (error) {
+          console.error('[v0] Feature error:', error)
+          setActionError(`ফিচার আপডেট ব্যর্থ: ${error.message}`)
+          return
+        }
         setCows(prev => prev.map(c => c.id === cowId ? { ...c, is_featured: isFeatured } : c))
       } else if (action === 'hide' || action === 'unhide') {
         const isHidden = action === 'hide'
-        await supabase.from('cows').update({ is_hidden: isHidden }).eq('id', cowId)
+        const { error } = await supabase.from('cows').update({ is_hidden: isHidden }).eq('id', cowId)
+        if (error) {
+          console.error('[v0] Hide error:', error)
+          setActionError(`হাইড আপডেট ব্যর্থ: ${error.message}`)
+          return
+        }
         setCows(prev => prev.map(c => c.id === cowId ? { ...c, is_hidden: isHidden } : c))
       } else {
         const newStatus = action === 'approve' ? 'approved' : 'rejected'
-        await supabase.from('cows').update({ 
+        const { error } = await supabase.from('cows').update({ 
           status: newStatus,
           moderated_at: new Date().toISOString()
         }).eq('id', cowId)
+        if (error) {
+          console.error('[v0] Status update error:', error)
+          setActionError(`স্ট্যাটাস আপডেট ব্যর্থ: ${error.message}`)
+          return
+        }
         setCows(prev => prev.map(c => c.id === cowId ? { ...c, status: newStatus } : c))
       }
     } catch (error) {
       console.error('[v0] Action error:', error)
+      setActionError('অ্যাকশন ব্যর্থ হয়েছে')
     } finally {
       setActionLoading(null)
     }
@@ -154,11 +182,24 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
 
   const handleUserRoleChange = async (userId: string, newRole: UserRole) => {
     const supabase = createClient()
+    setRoleUpdateError(null)
+    
     try {
-      await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+      
+      if (error) {
+        console.error('[v0] Role update error:', error)
+        setRoleUpdateError(`রোল আপডেট ব্যর্থ: ${error.message}`)
+        return
+      }
+      
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
     } catch (error) {
-      console.error('[v0] Role update error:', error)
+      console.error('[v0] Role update exception:', error)
+      setRoleUpdateError('রোল আপডেট করতে সমস্যা হয়েছে')
     }
   }
 
@@ -413,6 +454,17 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
           {/* Posts Management View */}
           {mainTab === 'posts' && (
             <div className="space-y-4">
+              {/* Action Error */}
+              {actionError && (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-red-600">error</span>
+                  <span className="text-red-700">{actionError}</span>
+                  <button onClick={() => setActionError(null)} className="ml-auto p-1 rounded hover:bg-red-100">
+                    <span className="material-symbols-outlined text-red-600 text-lg">close</span>
+                  </button>
+                </div>
+              )}
+
               {/* Post Tabs */}
               <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                 {postTabs.map(tab => (
@@ -660,6 +712,17 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
           {/* Users Management View */}
           {mainTab === 'users' && hasPermission(userRole, 'users:view') && (
             <div className="space-y-4">
+              {/* Role Update Error */}
+              {roleUpdateError && (
+                <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+                  <span className="material-symbols-outlined text-red-600">error</span>
+                  <span className="text-red-700">{roleUpdateError}</span>
+                  <button onClick={() => setRoleUpdateError(null)} className="ml-auto p-1 rounded hover:bg-red-100">
+                    <span className="material-symbols-outlined text-red-600 text-lg">close</span>
+                  </button>
+                </div>
+              )}
+
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-gray-900">ইউজার তালিকা ({users.length})</h3>
               </div>

@@ -7,14 +7,63 @@ export const revalidate = 0
 
 export default async function LeaderboardPage() {
   const supabase = await createClient()
-  
-  // Get top 10 cows by good_deal votes
-  const { data: topCows } = await supabase
+
+  const { data: cows } = await supabase
     .from('cows')
     .select('*')
     .eq('status', 'approved')
-    .order('good_deal_count', { ascending: false })
-    .limit(10)
+
+  const { data: votes } = await supabase
+    .from('votes')
+    .select('cow_id, vote_type')
+
+  const voteMap = (votes || []).reduce((acc, vote) => {
+    if (!vote.cow_id) return acc
+
+    if (!acc[vote.cow_id]) {
+      acc[vote.cow_id] = {
+        good_deal_count: 0,
+        overpriced_count: 0,
+        total_votes: 0,
+      }
+    }
+
+    if (vote.vote_type === 'good_deal') {
+      acc[vote.cow_id].good_deal_count += 1
+    }
+
+    if (vote.vote_type === 'overpriced') {
+      acc[vote.cow_id].overpriced_count += 1
+    }
+
+    acc[vote.cow_id].total_votes += 1
+
+    return acc
+  }, {} as Record<string, { good_deal_count: number; overpriced_count: number; total_votes: number }>)
+
+  const topCows = (cows || [])
+    .map((cow) => {
+      const stats = voteMap[cow.id] || {
+        good_deal_count: 0,
+        overpriced_count: 0,
+        total_votes: 0,
+      }
+
+      return {
+        ...cow,
+        good_deal_count: stats.good_deal_count,
+        overpriced_count: stats.overpriced_count,
+        total_votes: stats.total_votes,
+      }
+    })
+    .filter((cow) => cow.total_votes > 0)
+    .sort((a, b) => {
+      if (b.good_deal_count !== a.good_deal_count) {
+        return b.good_deal_count - a.good_deal_count
+      }
+      return b.total_votes - a.total_votes
+    })
+    .slice(0, 10)
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('bn-BD').format(price)
@@ -24,10 +73,9 @@ export default async function LeaderboardPage() {
     <main className="min-h-screen relative">
       <OrganicBlobs />
       <Navigation />
-      
+
       <div className="pt-24 md:pt-32 px-4 pb-32">
         <div className="max-w-2xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 mb-4">
               <span className="material-symbols-outlined text-amber-600 text-3xl">trophy</span>
@@ -36,13 +84,12 @@ export default async function LeaderboardPage() {
             <p className="text-gray-600">সবচেয়ে বেশি ভালো দাম রেটিং পাওয়া গরু</p>
           </div>
 
-          {/* Leaderboard */}
-          {topCows && topCows.length > 0 ? (
+          {topCows.length > 0 ? (
             <div className="space-y-3">
               {topCows.map((cow, index) => {
-                const totalVotes = cow.good_deal_count + cow.overpriced_count
+                const totalVotes = cow.total_votes
                 const percent = totalVotes > 0 ? Math.round((cow.good_deal_count / totalVotes) * 100) : 0
-                
+
                 return (
                   <div
                     key={cow.id}
@@ -50,7 +97,6 @@ export default async function LeaderboardPage() {
                       index < 3 ? 'ring-2 ring-amber-400' : ''
                     }`}
                   >
-                    {/* Rank */}
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-lg ${
                       index === 0 ? 'bg-amber-400 text-amber-900' :
                       index === 1 ? 'bg-gray-300 text-gray-700' :
@@ -60,7 +106,6 @@ export default async function LeaderboardPage() {
                       {index + 1}
                     </div>
 
-                    {/* Image */}
                     <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                       <Image
                         src={cow.image_url}
@@ -71,7 +116,6 @@ export default async function LeaderboardPage() {
                       />
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-bold text-emerald-900">৳{formatPrice(cow.price)}</span>
@@ -87,13 +131,13 @@ export default async function LeaderboardPage() {
                       </div>
                     </div>
 
-                    {/* Stats */}
                     <div className="text-right flex-shrink-0">
                       <div className="flex items-center gap-1 text-emerald-600 font-semibold">
                         <span className="material-symbols-outlined text-lg">thumb_up</span>
                         <span>{cow.good_deal_count}</span>
                       </div>
                       <div className="text-xs text-gray-500">{percent}% ভালো দাম</div>
+                      <div className="text-xs text-gray-400">{totalVotes} মোট ভোট</div>
                     </div>
                   </div>
                 )

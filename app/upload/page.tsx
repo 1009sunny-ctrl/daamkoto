@@ -186,11 +186,22 @@ if (selectedDistrict) {
       const finalHutName = hut === 'other' ? customHut : (selectedHaat?.name_bn || selectedHaat?.name || null)
 
       // Get anonymous user ID
-      let anonymousUserId = localStorage.getItem('anonymous_user_id')
-      if (!anonymousUserId) {
-        anonymousUserId = crypto.randomUUID()
-        localStorage.setItem('anonymous_user_id', anonymousUserId)
-      }
+      // Check if approval is required from admin setting
+const { data: approvalSetting } = await supabase
+  .from('site_settings')
+  .select('value')
+  .eq('key', 'post_approval_required')
+  .single()
+
+const approvalRequired = approvalSetting?.value !== 'false'
+const postStatus = approvalRequired ? 'pending' : 'approved'
+
+// Get anonymous user ID
+let anonymousUserId = localStorage.getItem('anonymous_user_id')
+if (!anonymousUserId) {
+  anonymousUserId = crypto.randomUUID()
+  localStorage.setItem('anonymous_user_id', anonymousUserId)
+}
 
       // Insert cow record with proper ID linking
       const { error: insertError } = await supabase.from('cows').insert({
@@ -202,8 +213,7 @@ if (selectedDistrict) {
         hut_id: hutId, // Proper relationship (null for custom/other)
         breed: breed || null,
         estimated_weight: weight ? parseInt(weight) : null,
-        status: 'pending',
-      })
+status: postStatus,      })
 
       if (insertError) throw insertError
 

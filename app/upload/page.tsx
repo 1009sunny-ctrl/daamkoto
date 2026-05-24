@@ -71,11 +71,15 @@ export default function UploadPage() {
   useEffect(() => {
     if (district) {
       // Find the selected district to get its ID
-      const selectedDistrict = districts.find(d => d.id === district)
-      if (selectedDistrict) {
-        // Filter haats by district_id for accurate linking
-        const filtered = haats.filter(h => h.district_id === selectedDistrict.id || h.district === selectedDistrict.name)
-        setFilteredHaats(filtered)
+const selectedDistrict = districts.find(d => String(d.id) === String(district))
+
+if (selectedDistrict) {
+  const filtered = haats.filter(h =>
+    String(h.district_id) === String(selectedDistrict.id) ||
+    h.district === selectedDistrict.name_bn ||
+    h.district === selectedDistrict.name
+  )
+  setFilteredHaats(filtered)
       } else {
         setFilteredHaats([])
       }
@@ -172,9 +176,9 @@ export default function UploadPage() {
         .getPublicUrl(fileName)
 
       // Get district info for proper linking
-      const selectedDistrict = districts.find(d => d.id === district)
+      const selectedDistrict = districts.find(d => String(d.id) === String(district))
       const districtId = selectedDistrict?.id || null
-      const districtName = selectedDistrict?.name || ''
+      const districtName = selectedDistrict?.name_bn || selectedDistrict?.name || ''
 
       // Determine final hut info - use ID for linking, name for display
       const selectedHaat = hut && hut !== 'other' ? filteredHaats.find(h => h.id === hut) : null

@@ -12,6 +12,7 @@ import {
   getAnonymousUserId,
 } from '@/lib/utils/voting'
 import { cn } from '@/lib/utils'
+import { SocialShareCompact } from './social-share'
 
 interface CowWithVotes extends Cow {
   vote_good_deal_count?: number
@@ -127,6 +128,15 @@ export function CowCard({ cow, onVote }: CowCardProps) {
   const totalVotes = goodDealCount + overpricedCount
   const goodDealPercent = totalVotes > 0 ? Math.round((goodDealCount / totalVotes) * 100) : 50
 
+  // Price sentiment based on community votes
+  const getPriceSentiment = () => {
+    if (totalVotes < 3) return null // Need at least 3 votes for sentiment
+    if (goodDealPercent >= 70) return { label: 'ভালো দাম', color: 'bg-emerald-500', icon: 'verified' }
+    if (goodDealPercent <= 30) return { label: 'বেশি দাম', color: 'bg-orange-500', icon: 'warning' }
+    return { label: 'মিশ্র মতামত', color: 'bg-gray-500', icon: 'thumbs_up_down' }
+  }
+  const sentiment = getPriceSentiment()
+
   return (
     <>
       <div className="premium-card overflow-hidden">
@@ -145,6 +155,16 @@ export function CowCard({ cow, onVote }: CowCardProps) {
             <div className="bg-white/95 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-lg">
               <span className="text-emerald-900 font-bold text-lg">{formatPrice(cow.price)}</span>
             </div>
+            {/* Sentiment Badge */}
+            {sentiment && (
+              <div className={cn(
+                'mt-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-white text-xs font-medium',
+                sentiment.color
+              )}>
+                <span className="material-symbols-outlined text-xs">{sentiment.icon}</span>
+                <span>{sentiment.label}</span>
+              </div>
+            )}
           </div>
 
           {/* Breed Badge */}
@@ -156,13 +176,20 @@ export function CowCard({ cow, onVote }: CowCardProps) {
             </div>
           )}
 
-          {/* Report Button */}
-          <button
-            onClick={() => setShowReportModal(true)}
-            className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors"
-          >
-            <span className="material-symbols-outlined text-lg">flag</span>
-          </button>
+          {/* Share & Report Buttons */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+            <SocialShareCompact 
+              url={typeof window !== 'undefined' ? `${window.location.origin}/cow/${cow.id}` : `/cow/${cow.id}`}
+              title={cow.title || 'কোরবানির গরু'}
+              price={cow.price}
+            />
+            <button
+              onClick={() => setShowReportModal(true)}
+              className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors"
+            >
+              <span className="material-symbols-outlined text-lg">flag</span>
+            </button>
+          </div>
         </div>
 
         {/* Content */}

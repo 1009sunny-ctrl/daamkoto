@@ -72,8 +72,13 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
             votesToday: 0, // Would need more complex query
           })
         } else if (mainTab === 'haats') {
-          const { data } = await supabase.from('huts').select('*').order('name')
-          setHaats(data || [])
+  const [haatsRes, districtsRes] = await Promise.all([
+    supabase.from('huts').select('*').order('total_uploads', { ascending: false }),
+    supabase.from('districts').select('*').eq('is_active', true).order('name_bn'),
+  ])
+
+  setHaats(haatsRes.data || [])
+  setDistricts(districtsRes.data || [])
         } else if (mainTab === 'districts') {
           const { data } = await supabase.from('districts').select('*').order('division, name')
           setDistricts(data || [])
@@ -655,7 +660,10 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
                 // Refetch haats data
                 const fetchHaats = async () => {
                   const supabase = createClient()
-                  const { data } = await supabase.from('huts').select('*').order('name')
+                  const { data } = await supabase
+  .from('huts')
+  .select('*')
+  .order('total_uploads', { ascending: false })
                   if (data) setHaats(data)
                 }
                 fetchHaats()

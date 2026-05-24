@@ -59,14 +59,14 @@ export default async function HomePage() {
       {/* Hero Section */}
       <section className="relative pt-24 md:pt-32 pb-12 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium mb-6">
-            <span className="material-symbols-outlined text-lg">verified</span>
-            <span>বাংলাদেশের #১ কোরবানি পশু মূল্য প্ল্যাটফর্ম</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-extrabold text-emerald-950 mb-4 leading-tight">
-            কত <span className="text-orange-500 font-semibold">নিলো?</span>
-          </h1>
+          <h1 className="text-4xl md:text-6xl font-extrabold text-emerald-950 mb-5 leading-tight">
+  কত <span className="text-orange-500 font-semibold">নিলো?</span>
+</h1>
+
+<div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium mb-6">
+  <span className="material-symbols-outlined text-lg">verified</span>
+  <span>মানুষ কী দামে গরু কিনছে দেখুন</span>
+</div>
           <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
             আপনার কোরবানির পশুর দাম শেয়ার করুন, অন্যদের দাম দেখুন এবং 
             <span className="text-emerald-600 font-semibold"> ভালো দাম</span> নাকি 

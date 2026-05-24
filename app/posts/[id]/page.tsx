@@ -39,8 +39,7 @@ export default async function PostDetailPage({
     return new Intl.NumberFormat('bn-BD').format(price)
   }
 
-  const postUrl = `https://www.pixork.com/posts/${cow.id}`
-
+const postUrl = `https://kotonilo.com/posts/${cow.id}`
   return (
     <main className="min-h-screen relative">
       <OrganicBlobs />

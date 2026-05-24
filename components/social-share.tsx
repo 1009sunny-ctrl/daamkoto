@@ -13,8 +13,7 @@ export function SocialShare({ url, title = 'কত নিলো?', price }: Soci
   const [copied, setCopied] = useState(false)
 
   const shareText = `${title}${price ? ` — দাম ৳${price.toLocaleString('bn-BD')}` : ''}`
-  const finalUrl = url.startsWith('http') ? url : `https://www.pixork.com${url}`
-
+const finalUrl = url.startsWith('http') ? url : `https://kotonilo.com${url}`
   const copyLink = async () => {
     await navigator.clipboard.writeText(finalUrl)
     setCopied(true)
@@ -71,7 +70,7 @@ export function SocialShare({ url, title = 'কত নিলো?', price }: Soci
 }
 
 export function SocialShareCompact({ url, title = 'কত নিলো?', price }: SocialShareProps) {
-  const finalUrl = url.startsWith('http') ? url : `https://www.pixork.com${url}`
+  const finalUrl = url.startsWith('http') ? url : `https://www.kotonilo.com${url}`
   const shareText = `${title}${price ? ` — দাম ৳${price.toLocaleString('bn-BD')}` : ''}`
 
   return (

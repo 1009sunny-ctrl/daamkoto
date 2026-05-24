@@ -31,6 +31,7 @@ export function SiteSettings({ onUpdate }: SiteSettingsProps) {
   const [settings, setSettings] = useState<Record<string, unknown>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [editingKey, setEditingKey] = useState<string | null>(null)
   const [editValue, setEditValue] = useState<string>('')
 
@@ -54,24 +55,50 @@ export function SiteSettings({ onUpdate }: SiteSettingsProps) {
 
   const handleSave = async (key: string, value: unknown) => {
     setSaving(key)
+    setSaveError(null)
     const supabase = createClient()
 
     try {
-      const { error } = await supabase
+      // First check if setting exists
+      const { data: existing } = await supabase
         .from('site_settings')
-        .upsert({
-          key,
-          value,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'key' })
+        .select('id')
+        .eq('key', key)
+        .single()
 
-      if (error) throw error
+      let result
+      if (existing) {
+        // Update existing
+        result = await supabase
+          .from('site_settings')
+          .update({
+            value,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('key', key)
+      } else {
+        // Insert new
+        result = await supabase
+          .from('site_settings')
+          .insert({
+            key,
+            value,
+            updated_at: new Date().toISOString(),
+          })
+      }
+
+      if (result.error) {
+        console.error('[v0] Save setting error:', result.error)
+        setSaveError(`সংরক্ষণ ব্যর্থ: ${result.error.message}`)
+        return
+      }
 
       setSettings(prev => ({ ...prev, [key]: value }))
       setEditingKey(null)
       onUpdate?.()
     } catch (error) {
       console.error('[v0] Error saving setting:', error)
+      setSaveError('সংরক্ষণ ব্যর্থ হয়েছে')
     } finally {
       setSaving(null)
     }
@@ -208,7 +235,7 @@ export function SiteSettings({ onUpdate }: SiteSettingsProps) {
       <div className="flex items-center gap-2">
         <span className="text-gray-700 text-sm truncate max-w-xs">
           {displayValue === null || displayValue === undefined || displayValue === 'null' 
-            ? <span className="text-gray-400 italic">সেট করা হয়নি</span>
+            ? <span className="text-gray-400 italic">সেট ক���া হয়নি</span>
             : String(displayValue)
           }
         </span>
@@ -233,6 +260,17 @@ export function SiteSettings({ onUpdate }: SiteSettingsProps) {
   return (
     <div className="space-y-6">
       <h3 className="font-semibold text-gray-900">সাইট সেটিংস</h3>
+
+      {/* Error Message */}
+      {saveError && (
+        <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+          <span className="material-symbols-outlined text-red-600">error</span>
+          <span className="text-red-700">{saveError}</span>
+          <button onClick={() => setSaveError(null)} className="ml-auto p-1 rounded hover:bg-red-100">
+            <span className="material-symbols-outlined text-red-600 text-lg">close</span>
+          </button>
+        </div>
+      )}
 
       <div className="premium-card divide-y">
         {SETTING_CONFIGS.map(config => (

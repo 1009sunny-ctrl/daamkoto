@@ -104,20 +104,6 @@ export default async function HomePage() {
               <div className="text-sm text-gray-500">মোট পোস্ট</div>
             </div>
             <div className="premium-card p-4 text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-amber-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-amber-600 text-2xl">payments</span>
-              </div>
-              <div className="text-2xl font-bold text-emerald-900">৳{avgPrice.toLocaleString('bn-BD')}</div>
-              <div className="text-sm text-gray-500">গড় দাম</div>
-            </div>
-            <div className="premium-card p-4 text-center">
-              <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-blue-100 flex items-center justify-center">
-                <span className="material-symbols-outlined text-blue-600 text-2xl">how_to_vote</span>
-              </div>
-              <div className="text-2xl font-bold text-emerald-900">{totalVotes ?? 0}</div>
-              <div className="text-sm text-gray-500">মোট ভোট</div>
-            </div>
-            <div className="premium-card p-4 text-center">
               <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-purple-100 flex items-center justify-center">
                 <span className="material-symbols-outlined text-purple-600 text-2xl">storefront</span>
               </div>

@@ -152,7 +152,7 @@ export default async function HomePage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 px-4 py-8 bg-white/50">
         <div className="max-w-6xl mx-auto text-center text-sm text-gray-500">
-          <p>© ২০২৬ Koto Nilo by Pixork। ঈদুল আযহার জন্য তৈরি।</p>
+          <p>© 2026 Koto Nilo by FaSu Production. Email: 1009.personal@gmail.com</p>
         </div>
       </footer>
     </main>

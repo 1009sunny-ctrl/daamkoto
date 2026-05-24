@@ -37,6 +37,8 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
   const [stats, setStats] = useState<AnalyticsStats | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const [roleUpdateError, setRoleUpdateError] = useState<string | null>(null)
+
   // Fetch data based on active tab
   useEffect(() => {
     const fetchData = async () => {
@@ -154,11 +156,24 @@ export function AdminDashboard({ initialCows, userEmail, userRole }: AdminDashbo
 
   const handleUserRoleChange = async (userId: string, newRole: UserRole) => {
     const supabase = createClient()
+    setRoleUpdateError(null)
+    
     try {
-      await supabase.from('profiles').update({ role: newRole }).eq('id', userId)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole, updated_at: new Date().toISOString() })
+        .eq('id', userId)
+      
+      if (error) {
+        console.error('[v0] Role update error:', error)
+        setRoleUpdateError(`রোল আপডেট ব্যর্থ: ${error.message}`)
+        return
+      }
+      
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
     } catch (error) {
-      console.error('[v0] Role update error:', error)
+      console.error('[v0] Role update exception:', error)
+      setRoleUpdateError('রোল আপডেট করতে সমস্যা হয়েছে')
     }
   }
 

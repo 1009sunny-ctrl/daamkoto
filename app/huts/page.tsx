@@ -52,11 +52,16 @@ export default async function HutsPage() {
 
   // Group huts by district_id for proper linking
   const hutsByDistrictId = hutsWithStats.reduce((acc, hut) => {
-    const key = hut.district_id || hut.district || 'unknown'
-    if (!acc[key]) acc[key] = []
-    acc[key].push(hut)
-    return acc
-  }, {} as Record<string, typeof hutsWithStats>)
+  const key = String(hut.district_id || hut.district || 'unknown')
+
+  if (!acc[key]) {
+    acc[key] = []
+  }
+
+  acc[key].push(hut)
+
+  return acc
+}, {} as Record<string, typeof hutsWithStats>)
 
   return (
     <main className="min-h-screen relative">
@@ -75,7 +80,7 @@ export default async function HutsPage() {
           <div className="space-y-8">
             {(districts || []).map((district) => {
               // Get huts for this district by district_id
-              const districtHuts = hutsByDistrictId[district.id] || []
+              const districtHuts = hutsByDistrictId[String(district.id)] || []
               
               // Sort by calculated uploads (most active first)
               const sortedHuts = [...districtHuts].sort((a, b) => b.calculated_uploads - a.calculated_uploads)

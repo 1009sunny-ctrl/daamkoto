@@ -208,22 +208,18 @@ export function Navigation() {
 
     {/* Center Logo + Name */}
     <Link
-      href="/"
-      className="flex items-center gap-2"
-    >
-      <Image
-        src="/images/Logo1.jpg"
-        alt="Koto Nilo"
-        width={38}
-        height={38}
-        className="rounded-full object-contain"
-      />
-
-      <span className="text-xl font-extrabold tracking-tight leading-none">
-        <span className="text-emerald-950">Koto</span>
-        <span className="text-orange-500">Nilo</span>
-      </span>
-    </Link>
+  href="/"
+  className="flex items-center justify-center"
+>
+  <Image
+    src="/images/logo1.jpeg"
+    alt="Koto Nilo"
+    width={150}
+    height={45}
+    className="object-contain"
+    priority
+  />
+</Link>
 
     {/* User Menu */}
     {!loading && user && (

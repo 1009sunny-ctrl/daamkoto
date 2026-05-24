@@ -16,11 +16,10 @@ export default async function PostDetailPage({
   const supabase = await createClient()
 
   const { data: cow } = await supabase
-    .from('cows')
-    .select('*')
-    .eq('id', id)
-    .eq('status', 'approved')
-    .single()
+  .from('cows')
+  .select('*')
+  .eq('id', id)
+  .single()
 
   if (!cow) {
     notFound()

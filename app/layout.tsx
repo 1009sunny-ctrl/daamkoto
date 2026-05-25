@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 
     images: [
       {
-        url: '/images/logo1.jpeg',
+url: '/images/Logo1.jpg',
         width: 1200,
         height: 630,
         alt: 'KotoNilo',
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     description:
       'বাংলাদেশের কোরবানির গরুর দাম জানুন, শেয়ার করুন এবং রেট করুন।',
 
-    images: ['/images/logo1.jpeg'],
+images: ['/images/Logo1.jpg'],
   },
 
   icons: {

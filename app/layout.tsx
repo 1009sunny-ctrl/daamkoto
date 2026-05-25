@@ -16,16 +16,71 @@ const notoSansBengali = Noto_Sans_Bengali({
 })
 
 export const metadata: Metadata = {
-  title: 'Koto Nilo - Premium Livestock Price Intelligence',
-  description: 'বাংলাদেশের কোরবানির পশুর দাম জানুন, শেয়ার করুন এবং রেট করুন। Eid ul Adha livestock price intelligence platform.',
-  keywords: ['qurbani', 'cow price', 'livestock', 'bangladesh', 'eid ul adha', 'cattle market'],
+  metadataBase: new URL('https://www.kotonilo.com'),
+
+  title: 'Koto Nilo - কোরবানির গরুর দাম',
+
+  description:
+    'বাংলাদেশের কোরবানির গরুর দাম জানুন, শেয়ার করুন এবং রেট করুন। মানুষ কী দামে গরু কিনছে দেখুন।',
+
+  keywords: [
+    'কোরবানির গরু',
+    'গরুর দাম',
+    'কোরবানির হাট',
+    'ঢাকা গরুর হাট',
+    'qurbani cow price',
+    'cow price bangladesh',
+    'livestock bangladesh',
+    'eid ul adha',
+    'cattle market',
+  ],
+
   generator: 'v0.app',
+
+  openGraph: {
+    title: 'Koto Nilo - কোরবানির গরুর দাম',
+
+    description:
+      'বাংলাদেশের কোরবানির গরুর দাম জানুন, শেয়ার করুন এবং রেট করুন।',
+
+    url: 'https://www.kotonilo.com',
+
+    siteName: 'KotoNilo',
+
+    images: [
+      {
+        url: '/images/logo1.jpeg',
+        width: 1200,
+        height: 630,
+        alt: 'KotoNilo',
+      },
+    ],
+
+    locale: 'bn_BD',
+
+    type: 'website',
+  },
+
+  twitter: {
+    card: 'summary_large_image',
+
+    title: 'Koto Nilo - কোরবানির গরুর দাম',
+
+    description:
+      'বাংলাদেশের কোরবানির গরুর দাম জানুন, শেয়ার করুন এবং রেট করুন।',
+
+    images: ['/images/logo1.jpeg'],
+  },
+
   icons: {
     icon: [
       { url: '/icon-light-32x32.png', media: '(prefers-color-scheme: light)' },
+
       { url: '/icon-dark-32x32.png', media: '(prefers-color-scheme: dark)' },
+
       { url: '/icon.svg', type: 'image/svg+xml' },
     ],
+
     apple: '/apple-icon.png',
   },
 }

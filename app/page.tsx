@@ -120,7 +120,7 @@ export default async function HomePage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-emerald-950">সাম্প্রতিক পোস্ট</h2>
             <Link 
-              href="/all" 
+              href="/posts" 
               className="flex items-center gap-1 text-emerald-600 font-medium hover:text-emerald-700"
             >
               <span>সব দেখুন</span>
